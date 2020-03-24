@@ -11,83 +11,44 @@
 #include <string.h>
 
 //include de la biblio
-#include "io_file.h"
-
-#define TAILLE_MESSAGE 16
-#define BUFFER_SIZE 16
-
-void gestionTube()
-{
-	if(mkfifo("/tmp/tube", 0777) != 0)
-	{
-		printf("Echec du mkfifo erreur lors de la création du processus\n");
-		exit(1);
-	}
-	
-	int fd = open("/tmp/tube", O_RDWR);
-	
-	if(fd < 0)	
-		perror("Problème avec open ");
-	
-	if(!fork())
-	{
-		if(write(fd, "Hello World!", TAILLE_MESSAGE) < 0)	
-			perror("Problème avec write ");
-			
-		printf("Le processus fils a écrit le message dans le tube !\n");
-	}
-	
-	else
-	{
-		wait(NULL);
-		char lecture[TAILLE_MESSAGE];
-		read(fd, lecture, TAILLE_MESSAGE);
-		printf("Le processus père reçoit le message : %s\n\n",lecture);
-		close(fd);
-		unlink("/tmp/tube");
-	}
-}
+#include "se_fichier.h"
 
 //Fichier configuration
-void config()
+int config()
 {
+	SE_FICHIER fichier;
 	
+	
+	return 0;
 }
 
 //Lecture du tube
-void serveur()
+int serveur(const char *chemin, int argc)
 {
+	SE_FICHIER tube;
+	int i;
 	
-}
-
-//Lecture du tube
-void client()
-{
+	int tab[argc];
 	
-}
+	tube = SE_ouverture (chemin, O_RDONLY);
 
-void q1Named() 
-{
-	int fd;
-	char buf [BUFFER_SIZE];
-
-	mkfifo ("/tmp/tube", 0600);
-
-	if (fork ()) 
+	if (tube.descripteur == -1)
+		return -1;
+	
+	for(int cmpt = 0; SE_lectureEntier (tube, &i) > 0; cmpt++)
 	{
-		fd = open ("/tmp/tube", O_WRONLY);
-
-		strcpy (buf, "Here is Brian!");
-
-		write (fd, buf, BUFFER_SIZE);
-
-		close (fd);
-
-		wait (NULL);
-	} 
+		tab[cmpt] = i;
+	}
 	
-	else 
-	{
+	SE_fermeture (tube);
+
+	return 0;
+	
+	
+	//~ SE_FICHIER file;
+	//~ file = SE_ouverture (path, O_RDONLY);
+	/*
+
 		fd = open ("/tmp/tube", O_RDONLY);
 
 		read (fd, buf, BUFFER_SIZE);
@@ -95,55 +56,52 @@ void q1Named()
 		printf ("%s\n", buf);
 
 		close (fd);
-
-		exit (0);
-	}
-
-	unlink ("/tmp/tube");
+ 
+	 //int fd;
+    printf("%d args:\n",argc);
+    for(int i = 2; i < argc; i++) printf("%d ",atoi(argv[i]));
+    printf("\n");
+    */
 }
 
-void q2Named () {
-	int fd, number1, number2;
-	char buf [BUFFER_SIZE];
-
-	mkfifo ("/tmp/tube", 0600);
-
-	if (fork()) 
-	{
-		fd = open ("/tmp/tube", O_WRONLY);
-
-		number1 = rand () % 1000;
-		number2 = rand () % 10;
-
-		write (fd, &number1, sizeof (int) );
-		write (fd, &number2, sizeof (int) );
-
-		close (fd);
-
-		wait (NULL);
-	} 
+//Lecture du tube
+int client(const char *chemin, int argc, char* argv[])
+{
+	SE_FICHIER tube;
 	
-	else 
+	tube = SE_ouverture (chemin, O_WRONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+	
+	//On commence à 2 car on ne veux pas lire ./million client
+	for(int i = 2; i<argc; i++)
 	{
-		fd = open ("/tmp/tube", O_RDONLY);
-
-		read (fd, &number1, sizeof (int) );
-		read (fd, &number2, sizeof (int) );
-
-		printf ("(%d, %d)\n", number1, number2);
-
-		close (fd);
-
-		exit (0);
+		if(SE_ecritureEntier(tube, atoi(argv[i])) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
 	}
 
-	unlink ("/tmp/tube");
+	SE_fermeture (tube);
+
+	return 0;
+	
+	/*
+		fd = open ("/tmp/tube", O_WRONLY);
+
+		strcpy (buf, "Here is Brian!");
+		write (fd, buf, BUFFER_SIZE);
+		close (fd);
+		 
+	*/
 }
 
 int main(int argc, char* argv[]){
     
     //doit y avoir plus de trois arguments minimum 
-    if (argc < 3)
+    /*if (argc < 3)
     {
         printf("Syntaxe :\n");
     }
@@ -156,6 +114,48 @@ int main(int argc, char* argv[]){
         else if(strcmp(argv[1], "client") == 0) 
             client();
     }
+    */
+    
+   
+    for(int i=2; i<argc; i++)
+    {
+		printf("argument : %s\n", argv[i]);
+	}
+    
+    config();
     
     exit(0);
 }
+
+/*
+SE_lectureEntier(cfgFile, &j);
+  // j = 4 
+SE_lectureEntier(cfgFile, &gain[j-1]);
+  // gain[3] = (GAIN POUR 4 CHIFFRES)
+*/
+
+
+//~ if (SE_lectureEntier(cfgFile, &nbrGagnants) == -1)
+ //~ PRINT_ON_ERR("Lecture de nbrGagnants")
+
+
+//~ tabGagnants = malloc(nbrGagnants * sizeof(int));
+//~ tabGain     = malloc(nbrGagnants * sizeof(int));
+
+//~ for (int i = 0; i < nbrGagnants; ++i) {
+	//~ if (SE_lectureEntier(cfgFile, &tabGagnants[i]) == -1)
+		 //~ PRINT_ON_ERR("Lecture des numéros gagnants")
+
+
+//~ int fd = open ("/tmp/tube", O_WRONLY);
+    //~ write(fd, &argc, sizeof(int)); // sends count of chosen numbers
+    //~ for(int i = 0; i < argc; i++) write(fd, &argv[i], sizeof(int));//sends chosen numbers
+    //~ close(fd);
+
+//~ write(fd, &entier, sizeof(int));
+
+//~ for(int i = 0; i < size_c; i++){
+        //~ read(fd, &table[i], sizeof(int));
+        //~ printf("%d ",table[i]);
+    //~ }
+    //~ printf("\n");
