@@ -14,7 +14,7 @@
 #include "se_fichier.h"
 
 //Fichier configuration
-int *config()
+int *config(int *tailleMax)
 {
 	SE_FICHIER fic;
 	int i;
@@ -40,7 +40,7 @@ int *config()
 		//~ printf("%d\n", tab[x]);
 	
 	SE_fermeture (fic);
-	
+	*tailleMax = taille;
 	return tab;
 }
 
@@ -75,7 +75,8 @@ int client(const char *chemin, int argc, char* argv[])
 //Faire un fonction principa serveur
 //une fonction lectureServeur
 //une fonction ecriture serveur pour transmettre le resultat du jeu aux clients
-int serveur(const char *chemin, int *tab)
+//Fair en sorte que la fonction lit en boucle le tube jusqu'a avoir un gagant
+int serveur(const char *chemin, int *tab, int tailleMax)
 {
 	SE_FICHIER tube;
 	int i;
@@ -95,20 +96,52 @@ int serveur(const char *chemin, int *tab)
 		{
 			if(i == tab[x])
 				numWin++;
-			printf("TEST\n");
 		}
 	}
 	
 	SE_fermeture (tube);
 	unlink (chemin);
 	
+	// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX //
+	
+	mkfifo ("/tmp/tube", 0600);
+	
+	tube = SE_ouverture(chemin, O_RDONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+		
+	if(numWin == 0)
+	{
+		if(SE_ecritureEntier(tube, 0) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
+	}
+	
+	else
+	{
+		for(int x = 0; x<2; x++)
+		{
+			if(SE_ecritureEntier(tube, tab[tailleMax-(2*numWin)+x]) == -1)
+			{
+				printf("Une erreur d'écriture a eu lieu\n");
+				return -1;
+			}
+		}
+	}
+	
+	SE_fermeture (tube);
+		
 	return 0;
 }
 
 int main(int argc, char* argv[]){
 	//Comparer le nombre d'argument avec le nombre de numéros de la lottery 
 	int *tab;
-    tab = config();
+	int tailleMax;
+    tab = config(&tailleMax);
 
     //~ int x =0;
     //~ while(tab[x] != NULL)
@@ -119,17 +152,18 @@ int main(int argc, char* argv[]){
     
     printf("%s\n", argv[1]);
     
+    mkfifo ("/tmp/tube", 0600);
+	
 	if(!strcmp(argv[1], "client"))
 	{
 		//Utilisisation de la fonction client
-		mkfifo ("/tmp/tube", 0600);
 		client("/tmp/tube", argc, argv);
 	}
 	
 	else if(!strcmp(argv[1], "server"))
 	{
 		//Utilisisation de la fonction serveur
-		serveur("/tmp/tube", tab);
+		serveur("/tmp/tube", tab, tailleMax);
 		free(tab);
 	}
 	
@@ -141,8 +175,5 @@ int main(int argc, char* argv[]){
 		printf("argument : %s\n", argv[i]);
 	}
 	
-	//Parcours du tab
-
-    
     exit(0);
 }
