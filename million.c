@@ -51,16 +51,16 @@ int *config(int *tailleMax)
 int client(const char *chemin, int argc, char* argv[])
 {
 	SE_FICHIER tube;
-	
+	int i;
 	tube = SE_ouverture (chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
 	
 	//On commence à 2 car on ne veux pas lire ./million client
-	for(int i = 2; i<argc; i++)
+	for(int x = 2; x<argc; x++)
 	{
-		if(SE_ecritureEntier(tube, atoi(argv[i])) == -1)
+		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
 		{
 			printf("Une erreur d'écriture a eu lieu\n");
 			return -1;
@@ -68,6 +68,26 @@ int client(const char *chemin, int argc, char* argv[])
 	}
 	SE_fermeture (tube);
 	
+	tube = SE_ouverture(chemin, O_RDONLY);
+	
+	if (tube.descripteur == -1)
+		return -1;
+	
+	SE_lectureEntier(tube, &i);
+	
+	if(i == 0)
+		printf("Vous avez perdu aucun bon numéro\n");
+		
+	else
+	{
+		printf("Vous avez %d bon numéro\n", i);
+		SE_lectureEntier(tube, &i);
+		printf("Vos gains s'élève à : %d\n", i);
+	}
+	
+	SE_fermeture (tube);
+	unlink (chemin);
+		
 	return 0;
 }
 
@@ -106,7 +126,7 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 	
 	mkfifo ("/tmp/tube", 0600);
 	
-	tube = SE_ouverture(chemin, O_RDONLY);
+	tube = SE_ouverture(chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
