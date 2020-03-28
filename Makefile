@@ -1,5 +1,5 @@
 run: compile
-	./million
+	./million test
 	
 compile:
 	gcc -Wall million.c -L. -liof -lm -g -o million

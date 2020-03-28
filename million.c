@@ -18,7 +18,6 @@ int *config()
 {
 	SE_FICHIER fic;
 	int i;
-	int val;
 	
 	fic = SE_ouverture ("lottery.cfg", O_RDONLY);
 
@@ -27,8 +26,8 @@ int *config()
 
 	SE_lectureEntier(fic, &i);
 	int taille = (i*3)+1; // i correspond au nombre de numéro le fois 3 correspond aux numeros gagnants + le nombre de numéros gagnant + les gains 
-	//int tab[taille];
 	int *tab = malloc (sizeof (int) * taille);
+	
 	tab[0] = i;
 	
 	for (int x = 1; x<taille; x++)
@@ -46,6 +45,9 @@ int *config()
 }
 
 //Lecture du tube
+//Faire une decomposition des fonctions avec une fonction client fonction principale
+//Une fonction ecritureClient
+//Une fonction lectureClient ou resultat client
 int client(const char *chemin, int argc, char* argv[])
 {
 	SE_FICHIER tube;
@@ -64,46 +66,71 @@ int client(const char *chemin, int argc, char* argv[])
 			return -1;
 		}
 	}
-
 	SE_fermeture (tube);
-
+	
 	return 0;
 }
 
 //Lecture du tube
-int serveur(const char *chemin, int argc)
+//Faire un fonction principa serveur
+//une fonction lectureServeur
+//une fonction ecriture serveur pour transmettre le resultat du jeu aux clients
+int serveur(const char *chemin, int *tab)
 {
 	SE_FICHIER tube;
 	int i;
+	int numWin;
+	int nbreNum = tab[0];
 	
-	int tab[argc];
-	
-	tube = SE_ouverture (chemin, O_RDONLY);
+	tube = SE_ouverture(chemin, O_RDONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
 	
-	for(int cmpt = 0; SE_lectureEntier(tube, &i) > 0; cmpt++)
+	for(int cmpt = 0; cmpt < nbreNum; cmpt++)
 	{
-		tab[cmpt] = i;
+		SE_lectureEntier(tube, &i);
+		
+		for(int x = 1; x <= nbreNum; x++)
+		{
+			if(i == tab[x])
+				numWin++;
+			printf("TEST\n");
+		}
 	}
 	
 	SE_fermeture (tube);
-
+	unlink (chemin);
+	
 	return 0;
 }
 
 int main(int argc, char* argv[]){
 	//Comparer le nombre d'argument avec le nombre de numéros de la lottery 
-	
-	if(argv[1] == "client")
+	int *tab;
+    tab = config();
+
+    //~ int x =0;
+    //~ while(tab[x] != NULL)
+    //~ {
+		//~ printf("%d\n", tab[x]);
+		//~ x++;
+    //~ }
+    
+    printf("%s\n", argv[1]);
+    
+	if(!strcmp(argv[1], "client"))
 	{
 		//Utilisisation de la fonction client
+		mkfifo ("/tmp/tube", 0600);
+		client("/tmp/tube", argc, argv);
 	}
 	
-	else if(argv[1] == "server")
+	else if(!strcmp(argv[1], "server"))
 	{
 		//Utilisisation de la fonction serveur
+		serveur("/tmp/tube", tab);
+		free(tab);
 	}
 	
 	else
@@ -115,16 +142,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	//Parcours du tab
-    int *tab;
-    tab = config();
 
-    int x =0;
-    while(tab[x] != NULL)
-    {
-		printf("%d\n", tab[x]);
-		x++;
-    }
-    free(tab);
     
     exit(0);
 }
