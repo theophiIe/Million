@@ -14,54 +14,35 @@
 #include "se_fichier.h"
 
 //Fichier configuration
-int config()
+int *config()
 {
-	SE_FICHIER fichier;
-	
-	
-	return 0;
-}
-
-//Lecture du tube
-int serveur(const char *chemin, int argc)
-{
-	SE_FICHIER tube;
+	SE_FICHIER fic;
 	int i;
+	int val;
 	
-	int tab[argc];
-	
-	tube = SE_ouverture (chemin, O_RDONLY);
+	fic = SE_ouverture ("lottery.cfg", O_RDONLY);
 
-	if (tube.descripteur == -1)
+	if (fic.descripteur == -1)
 		return -1;
+
+	SE_lectureEntier(fic, &i);
+	int taille = (i*3)+1; // i correspond au nombre de numéro le fois 3 correspond aux numeros gagnants + le nombre de numéros gagnant + les gains 
+	//int tab[taille];
+	int *tab = malloc (sizeof (int) * taille);
+	tab[0] = i;
 	
-	for(int cmpt = 0; SE_lectureEntier (tube, &i) > 0; cmpt++)
+	for (int x = 1; x<taille; x++)
 	{
-		tab[cmpt] = i;
+		SE_lectureEntier(fic, &i);
+		tab[x] = i;
 	}
 	
-	SE_fermeture (tube);
-
-	return 0;
+	//~ for (int x=0; x<taille; x++)
+		//~ printf("%d\n", tab[x]);
 	
+	SE_fermeture (fic);
 	
-	//~ SE_FICHIER file;
-	//~ file = SE_ouverture (path, O_RDONLY);
-	/*
-
-		fd = open ("/tmp/tube", O_RDONLY);
-
-		read (fd, buf, BUFFER_SIZE);
-
-		printf ("%s\n", buf);
-
-		close (fd);
- 
-	 //int fd;
-    printf("%d args:\n",argc);
-    for(int i = 2; i < argc; i++) printf("%d ",atoi(argv[i]));
-    printf("\n");
-    */
+	return tab;
 }
 
 //Lecture du tube
@@ -87,75 +68,63 @@ int client(const char *chemin, int argc, char* argv[])
 	SE_fermeture (tube);
 
 	return 0;
-	
-	/*
-		fd = open ("/tmp/tube", O_WRONLY);
+}
 
-		strcpy (buf, "Here is Brian!");
-		write (fd, buf, BUFFER_SIZE);
-		close (fd);
-		 
-	*/
+//Lecture du tube
+int serveur(const char *chemin, int argc)
+{
+	SE_FICHIER tube;
+	int i;
+	
+	int tab[argc];
+	
+	tube = SE_ouverture (chemin, O_RDONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+	
+	for(int cmpt = 0; SE_lectureEntier(tube, &i) > 0; cmpt++)
+	{
+		tab[cmpt] = i;
+	}
+	
+	SE_fermeture (tube);
+
+	return 0;
 }
 
 int main(int argc, char* argv[]){
-    
-    //doit y avoir plus de trois arguments minimum 
-    /*if (argc < 3)
-    {
-        printf("Syntaxe :\n");
-    }
-    
-    else 
-    {
-        if(strcmp(argv[1], "serveur") == 0) 
-            serveur();
-        
-        else if(strcmp(argv[1], "client") == 0) 
-            client();
-    }
-    */
-    
-   
+	//Comparer le nombre d'argument avec le nombre de numéros de la lottery 
+	
+	if(argv[1] == "client")
+	{
+		//Utilisisation de la fonction client
+	}
+	
+	else if(argv[1] == "server")
+	{
+		//Utilisisation de la fonction serveur
+	}
+	
+	else
+		printf("L'argument : %s n'est pas reconnue\n", argv[1]);
+	
     for(int i=2; i<argc; i++)
     {
 		printf("argument : %s\n", argv[i]);
 	}
-    
-    config();
+	
+	//Parcours du tab
+    int *tab;
+    tab = config();
+
+    int x =0;
+    while(tab[x] != NULL)
+    {
+		printf("%d\n", tab[x]);
+		x++;
+    }
+    free(tab);
     
     exit(0);
 }
-
-/*
-SE_lectureEntier(cfgFile, &j);
-  // j = 4 
-SE_lectureEntier(cfgFile, &gain[j-1]);
-  // gain[3] = (GAIN POUR 4 CHIFFRES)
-*/
-
-
-//~ if (SE_lectureEntier(cfgFile, &nbrGagnants) == -1)
- //~ PRINT_ON_ERR("Lecture de nbrGagnants")
-
-
-//~ tabGagnants = malloc(nbrGagnants * sizeof(int));
-//~ tabGain     = malloc(nbrGagnants * sizeof(int));
-
-//~ for (int i = 0; i < nbrGagnants; ++i) {
-	//~ if (SE_lectureEntier(cfgFile, &tabGagnants[i]) == -1)
-		 //~ PRINT_ON_ERR("Lecture des numéros gagnants")
-
-
-//~ int fd = open ("/tmp/tube", O_WRONLY);
-    //~ write(fd, &argc, sizeof(int)); // sends count of chosen numbers
-    //~ for(int i = 0; i < argc; i++) write(fd, &argv[i], sizeof(int));//sends chosen numbers
-    //~ close(fd);
-
-//~ write(fd, &entier, sizeof(int));
-
-//~ for(int i = 0; i < size_c; i++){
-        //~ read(fd, &table[i], sizeof(int));
-        //~ printf("%d ",table[i]);
-    //~ }
-    //~ printf("\n");
