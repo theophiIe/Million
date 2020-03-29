@@ -50,32 +50,44 @@ int *config(int *tailleMax)
 //Une fonction lectureClient ou resultat client
 int clientEcriture(const char *chemin, int argc, char* argv[])
 {	
-	SE_FICHIER tube;
-	int i;
-	tube = SE_ouverture (chemin, O_WRONLY);
+	mkfifo ("/tmp/tube", 0600);
+	printf("les numéros joués sont : ");
+	
+	SE_FICHIER tube = SE_ouverture (chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
 	
 	//On commence à 2 car on ne veux pas lire ./million client
-	for(int x = 2; x<argc; x++)
+	for(int x = 2; x < argc; x++)
 	{
+		
+		printf("%d ", atoi(argv[x]));
+		
 		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
 		{
 			printf("Une erreur d'écriture a eu lieu\n");
 			return -1;
 		}
+		
+		if(SE_ecritureCaractere (tube, ' ') == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
 	}
+	
+	printf("\n");
 	SE_fermeture (tube);
 	
 	return 0;
 }
 
-int clientLecture()
+int clientLecture(const char *chemin)
 {	
-	SE_FICHIER tube;
 	int i;
-	tube = SE_ouverture(chemin, O_RDONLY);
+	
+	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 	
 	if (tube.descripteur == -1)
 		return -1;
@@ -93,51 +105,16 @@ int clientLecture()
 	}
 	
 	SE_fermeture (tube);
-	unlink (chemin);
+	SE_suppression (chemin);
 		
 	return 0;
 }
 
 int client(const char *chemin, int argc, char* argv[])
 {
-	SE_FICHIER tube;
-	int i;
-	tube = SE_ouverture (chemin, O_WRONLY);
-
-	if (tube.descripteur == -1)
-		return -1;
+	clientEcriture(chemin, argc, argv);
+	//clientLecture(chemin);
 	
-	//On commence à 2 car on ne veux pas lire ./million client
-	for(int x = 2; x<argc; x++)
-	{
-		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
-		{
-			printf("Une erreur d'écriture a eu lieu\n");
-			return -1;
-		}
-	}
-	SE_fermeture (tube);
-	
-	tube = SE_ouverture(chemin, O_RDONLY);
-	
-	if (tube.descripteur == -1)
-		return -1;
-	
-	SE_lectureEntier(tube, &i);
-	
-	if(i == 0)
-		printf("Vous avez perdu aucun bon numéro\n");
-		
-	else
-	{
-		printf("Vous avez %d bon numéro\n", i);
-		SE_lectureEntier(tube, &i);
-		printf("Vos gains s'élève à : %d\n", i);
-	}
-	
-	SE_fermeture (tube);
-	unlink (chemin);
-		
 	return 0;
 }
 
@@ -148,19 +125,23 @@ int client(const char *chemin, int argc, char* argv[])
 //Fair en sorte que la fonction lit en boucle le tube jusqu'a avoir un gagant
 int serveurLecture(const char *chemin, int *tab, int *gain)
 {
-	SE_FICHIER tube;
 	int i;
-	int numWin;
+	int numWin = 0;
 	int nbreNum = tab[0];
 	
-	tube = SE_ouverture(chemin, O_RDONLY);
+	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
 	
+	printf("Le joueur a joué les numéros : ");
+	
 	for(int cmpt = 0; cmpt < nbreNum; cmpt++)
 	{
-		SE_lectureEntier(tube, &i);
+		if(SE_lectureEntier(tube, &i) == -1)
+			return -1;
+		
+		printf("%d ", i);
 		
 		for(int x = 1; x <= nbreNum; x++)
 		{
@@ -169,15 +150,17 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 		}
 	}
 	
+	SE_fermeture (tube);
+	SE_suppression (chemin);
+	
+	printf("le joueur à trouvé %d bon numéro : \n", numWin);
 	*gain = numWin;
 	
-	SE_fermeture (tube);
-	unlink (chemin);
 	return 0;
 }
 
 //Recup num win
-int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int *gain)
+int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 {
 	mkfifo (chemin, 0600);
 	
@@ -188,9 +171,15 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int *gain)
 	if (tube.descripteur == -1)
 		return -1;
 		
-	if(numWin == 0)
+	if(gain == 0)
 	{
 		if(SE_ecritureEntier(tube, 0) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
+		
+		if(SE_ecritureCaractere (tube, ' ') == -1)
 		{
 			printf("Une erreur d'écriture a eu lieu\n");
 			return -1;
@@ -206,63 +195,8 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int *gain)
 				printf("Une erreur d'écriture a eu lieu\n");
 				return -1;
 			}
-		}
-	}
-	
-	SE_fermeture (tube);
-		
-	return 0;
-}
-
-int serveur(const char *chemin, int *tab, int tailleMax)
-{
-	SE_FICHIER tube;
-	int i;
-	int numWin;
-	int nbreNum = tab[0];
-	
-	tube = SE_ouverture(chemin, O_RDONLY);
-
-	if (tube.descripteur == -1)
-		return -1;
-	
-	for(int cmpt = 0; cmpt < nbreNum; cmpt++)
-	{
-		SE_lectureEntier(tube, &i);
-		
-		for(int x = 1; x <= nbreNum; x++)
-		{
-			if(i == tab[x])
-				numWin++;
-		}
-	}
-	
-	SE_fermeture (tube);
-	unlink (chemin);
-	
-	// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX //
-	
-	mkfifo ("/tmp/tube", 0600);
-	
-	tube = SE_ouverture(chemin, O_WRONLY);
-
-	if (tube.descripteur == -1)
-		return -1;
-		
-	if(numWin == 0)
-	{
-		if(SE_ecritureEntier(tube, 0) == -1)
-		{
-			printf("Une erreur d'écriture a eu lieu\n");
-			return -1;
-		}
-	}
-	
-	else
-	{
-		for(int x = 0; x<2; x++)
-		{
-			if(SE_ecritureEntier(tube, tab[tailleMax-(2*numWin)+x]) == -1)
+			
+			if(SE_ecritureCaractere (tube, ' ') == -1)
 			{
 				printf("Une erreur d'écriture a eu lieu\n");
 				return -1;
@@ -275,43 +209,38 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 	return 0;
 }
 
+int serveur(const char *chemin, int *tab, int tailleMax)
+{
+	int gain;
+	
+	serveurLecture(chemin, tab, &gain);
+	//serveurEcriture(chemin, tab, tailleMax, gain);
+	
+	return 0;
+}
+
 int main(int argc, char* argv[]){
-	//Comparer le nombre d'argument avec le nombre de numéros de la lottery 
 	int *tab;
 	int tailleMax;
+    
     tab = config(&tailleMax);
-
-    //~ int x =0;
-    //~ while(tab[x] != NULL)
-    //~ {
-		//~ printf("%d\n", tab[x]);
-		//~ x++;
-    //~ }
     
-    printf("%s\n", argv[1]);
-    
-    mkfifo ("/tmp/tube", 0600);
-	
 	if(!strcmp(argv[1], "client"))
 	{
-		//Utilisisation de la fonction client
+		printf("client\n");
 		client("/tmp/tube", argc, argv);
 	}
 	
 	else if(!strcmp(argv[1], "server"))
 	{
-		//Utilisisation de la fonction serveur
+		printf("serveur\n");
 		serveur("/tmp/tube", tab, tailleMax);
-		free(tab);
 	}
 	
 	else
 		printf("L'argument : %s n'est pas reconnue\n", argv[1]);
 	
-    for(int i=2; i<argc; i++)
-    {
-		printf("argument : %s\n", argv[i]);
-	}
-	
+	free(tab);
+    
     exit(0);
 }
