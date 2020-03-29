@@ -48,6 +48,56 @@ int *config(int *tailleMax)
 //Faire une decomposition des fonctions avec une fonction client fonction principale
 //Une fonction ecritureClient
 //Une fonction lectureClient ou resultat client
+int clientEcriture(const char *chemin, int argc, char* argv[])
+{	
+	SE_FICHIER tube;
+	int i;
+	tube = SE_ouverture (chemin, O_WRONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+	
+	//On commence à 2 car on ne veux pas lire ./million client
+	for(int x = 2; x<argc; x++)
+	{
+		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
+	}
+	SE_fermeture (tube);
+	
+	return 0;
+}
+
+int clientLecture()
+{	
+	SE_FICHIER tube;
+	int i;
+	tube = SE_ouverture(chemin, O_RDONLY);
+	
+	if (tube.descripteur == -1)
+		return -1;
+	
+	SE_lectureEntier(tube, &i);
+	
+	if(i == 0)
+		printf("Vous avez perdu aucun bon numéro\n");
+		
+	else
+	{
+		printf("Vous avez %d bon numéro\n", i);
+		SE_lectureEntier(tube, &i);
+		printf("Vos gains s'élève à : %d\n", i);
+	}
+	
+	SE_fermeture (tube);
+	unlink (chemin);
+		
+	return 0;
+}
+
 int client(const char *chemin, int argc, char* argv[])
 {
 	SE_FICHIER tube;
@@ -96,6 +146,74 @@ int client(const char *chemin, int argc, char* argv[])
 //une fonction lectureServeur
 //une fonction ecriture serveur pour transmettre le resultat du jeu aux clients
 //Fair en sorte que la fonction lit en boucle le tube jusqu'a avoir un gagant
+int serveurLecture(const char *chemin, int *tab, int *gain)
+{
+	SE_FICHIER tube;
+	int i;
+	int numWin;
+	int nbreNum = tab[0];
+	
+	tube = SE_ouverture(chemin, O_RDONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+	
+	for(int cmpt = 0; cmpt < nbreNum; cmpt++)
+	{
+		SE_lectureEntier(tube, &i);
+		
+		for(int x = 1; x <= nbreNum; x++)
+		{
+			if(i == tab[x])
+				numWin++;
+		}
+	}
+	
+	*gain = numWin;
+	
+	SE_fermeture (tube);
+	unlink (chemin);
+	return 0;
+}
+
+//Recup num win
+int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int *gain)
+{
+	mkfifo (chemin, 0600);
+	
+	SE_FICHIER tube;
+	
+	tube = SE_ouverture(chemin, O_WRONLY);
+
+	if (tube.descripteur == -1)
+		return -1;
+		
+	if(numWin == 0)
+	{
+		if(SE_ecritureEntier(tube, 0) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
+	}
+	
+	else
+	{
+		for(int x = 0; x<2; x++)
+		{
+			if(SE_ecritureEntier(tube, tab[tailleMax-(2*gain)+x]) == -1)
+			{
+				printf("Une erreur d'écriture a eu lieu\n");
+				return -1;
+			}
+		}
+	}
+	
+	SE_fermeture (tube);
+		
+	return 0;
+}
+
 int serveur(const char *chemin, int *tab, int tailleMax)
 {
 	SE_FICHIER tube;
