@@ -307,3 +307,78 @@ int client(const char *chemin, int argc, char* argv[])
 		
 	return 0;
 }
+
+int main(int argc, char* argv[]){
+	//Comparer le nombre d'argument avec le nombre de numéros de la lottery 
+	int *tab;
+	int tailleMax;
+    
+    tab = config(&tailleMax);
+    
+    mkfifo ("/tmp/tube", 0600);
+	
+	if(!strcmp(argv[1], "client"))
+	{
+		//Utilisisation de la fonction client
+		client("/tmp/tube", argc, argv);
+	}
+	
+	else if(!strcmp(argv[1], "server"))
+	{
+		//Utilisisation de la fonction serveur
+		serveur("/tmp/tube", tab, tailleMax);
+		free(tab);
+	}
+	
+	else
+		printf("L'argument : %s n'est pas reconnue\n", argv[1]);
+	
+    for(int i=2; i<argc; i++)
+    {
+		printf("argument : %s\n", argv[i]);
+	}
+	
+    exit(0);
+}
+
+//~ int serveurLectureTest(const char *chemin)
+//~ {
+	//~ int i;
+	//~ int nbreNum = 4;
+	
+	//~ SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
+
+	//~ if (tube.descripteur == -1)
+		//~ return -1;
+	
+	//~ printf("Le joueur a joué les numéros : ");
+	
+	//~ for(int cmpt = 0; cmpt < nbreNum; cmpt++)
+	//~ {
+		
+		//~ if(SE_lectureEntier(tube, &i) == -1)
+			//~ return -1;
+
+		//~ printf("%d ", i);
+	//~ }
+	
+	//~ SE_fermeture (tube);
+	//~ SE_suppression (chemin);
+	
+	//~ printf("\nFin de traitement du serveur\n");
+	
+	//~ char str[256];
+	//~ int fd =-1;
+	
+	//~ if ( (fd = open(chemin, O_RDONLY)) == -1)
+	//~ {
+		//~ perror("Erreur open\n");
+		//~ return -1;
+	//~ }
+	
+	//~ read(fd, str, 256);
+	//~ printf("message reçu : %s\n", str);
+	//~ unlink(chemin);
+	
+	//~ return 0;
+//~ }
