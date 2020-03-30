@@ -92,7 +92,8 @@ int clientLecture(const char *chemin)
 	if (tube.descripteur == -1)
 		return -1;
 	
-	SE_lectureEntier(tube, &i);
+	if(SE_lectureEntier(tube, &i) == -1)
+		return -1;
 	
 	if(i == 0)
 		printf("Vous avez perdu aucun bon numéro\n");
@@ -100,7 +101,10 @@ int clientLecture(const char *chemin)
 	else
 	{
 		printf("Vous avez %d bon numéro\n", i);
-		SE_lectureEntier(tube, &i);
+		
+		if(SE_lectureEntier(tube, &i) == -1)
+			return -1;
+		
 		printf("Vos gains s'élève à : %d\n", i);
 	}
 	
@@ -113,7 +117,7 @@ int clientLecture(const char *chemin)
 int client(const char *chemin, int argc, char* argv[])
 {
 	clientEcriture(chemin, argc, argv);
-	//clientLecture(chemin);
+	clientLecture(chemin);
 	
 	return 0;
 }
@@ -153,7 +157,7 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 	SE_fermeture (tube);
 	SE_suppression (chemin);
 	
-	printf("le joueur à trouvé %d bon numéro : \n", numWin);
+	printf("\nLe joueur à trouvé %d bon numéro\n", numWin);
 	*gain = numWin;
 	
 	return 0;
@@ -164,9 +168,7 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 {
 	mkfifo (chemin, 0600);
 	
-	SE_FICHIER tube;
-	
-	tube = SE_ouverture(chemin, O_WRONLY);
+	SE_FICHIER tube = SE_ouverture(chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
 		return -1;
@@ -178,17 +180,11 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 			printf("Une erreur d'écriture a eu lieu\n");
 			return -1;
 		}
-		
-		if(SE_ecritureCaractere (tube, ' ') == -1)
-		{
-			printf("Une erreur d'écriture a eu lieu\n");
-			return -1;
-		}
 	}
 	
 	else
 	{
-		for(int x = 0; x<2; x++)
+		for(int x = 0; x < 2; x++)
 		{
 			if(SE_ecritureEntier(tube, tab[tailleMax-(2*gain)+x]) == -1)
 			{
@@ -213,8 +209,15 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 {
 	int gain;
 	
-	serveurLecture(chemin, tab, &gain);
-	//serveurEcriture(chemin, tab, tailleMax, gain);
+	while(1)
+	{	
+		if(serveurLecture(chemin, tab, &gain) != -1)
+			break;
+		
+		sleep(1);
+	}
+	
+	serveurEcriture(chemin, tab, tailleMax, gain);
 	
 	return 0;
 }
