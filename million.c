@@ -19,7 +19,7 @@ int *config(int *tailleMax)
 	SE_FICHIER fic;
 	int i;
 	
-	fic = SE_ouverture ("lottery.cfg", O_RDONLY);
+	fic = SE_ouverture ("lottery-test.cfg", O_RDONLY);
 
 	if (fic.descripteur == -1)
 		return -1;
@@ -37,31 +37,27 @@ int *config(int *tailleMax)
 	}
 	
 	//~ for (int x=0; x<taille; x++)
-		//~ printf("%d\n", tab[x]);
+		//~ printf("%d ", tab[x]);
 	
 	SE_fermeture (fic);
 	*tailleMax = taille;
 	return tab;
 }
 
-//Lecture du tube
-//Faire une decomposition des fonctions avec une fonction client fonction principale
-//Une fonction ecritureClient
-//Une fonction lectureClient ou resultat client
+
 int clientEcriture(const char *chemin, int argc, char* argv[])
 {	
-	mkfifo ("/tmp/tube", 0600);
-	printf("les numéros joués sont : ");
-	
+	printf("Client écriture : \n");
 	SE_FICHIER tube = SE_ouverture (chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
-		return -1;
+		return 2;
+	
+	printf("les numéros joués sont : ");
 	
 	//On commence à 2 car on ne veux pas lire ./million client
 	for(int x = 2; x < argc; x++)
 	{
-		
 		printf("%d ", atoi(argv[x]));
 		
 		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
@@ -85,8 +81,9 @@ int clientEcriture(const char *chemin, int argc, char* argv[])
 
 int clientLecture(const char *chemin)
 {	
+	printf("Client lecture : \n");
 	int i;
-	
+	int bonNum;
 	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 	
 	if (tube.descripteur == -1)
@@ -95,8 +92,10 @@ int clientLecture(const char *chemin)
 	if(SE_lectureEntier(tube, &i) == -1)
 		return -1;
 	
+	bonNum = i;
+	
 	if(i == 0)
-		printf("Vous avez perdu aucun bon numéro\n");
+		printf("Vous avez perdu aucun bon numéro\n\n");
 		
 	else
 	{
@@ -105,30 +104,46 @@ int clientLecture(const char *chemin)
 		if(SE_lectureEntier(tube, &i) == -1)
 			return -1;
 		
-		printf("Vos gains s'élève à : %d\n", i);
+		printf("Vos gains s'élève à : %d\n\n", i);
 	}
 	
 	SE_fermeture (tube);
 	SE_suppression (chemin);
 		
-	return 0;
+	return bonNum;
 }
 
-int client(const char *chemin, int argc, char* argv[])
+int client(const char *chemin, int argc, char* argv[], int nbreNum)
 {
-	clientEcriture(chemin, argc, argv);
-	clientLecture(chemin);
+	switch(clientEcriture(chemin, argc, argv))
+	{
+		case -1 :
+			printf("Une erreur est survenu\n");
+			return -1;
+		
+		case 0 :
+			if(clientLecture(chemin) != nbreNum)
+				return 0;
+			
+			else
+				return 1;
+			
+		case 2 :
+			printf("Pas de serveur trouvé\n");
+			return 2;
+			
+		default :
+			break;
+	}
 	
 	return 0;
 }
 
-//Lecture du tube
-//Faire un fonction principa serveur
-//une fonction lectureServeur
-//une fonction ecriture serveur pour transmettre le resultat du jeu aux clients
-//Fair en sorte que la fonction lit en boucle le tube jusqu'a avoir un gagant
 int serveurLecture(const char *chemin, int *tab, int *gain)
 {
+	printf("Serveur lecture: \n");
+	mkfifo ("/tmp/tube", 0600);
+	
 	int i;
 	int numWin = 0;
 	int nbreNum = tab[0];
@@ -157,15 +172,15 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 	SE_fermeture (tube);
 	SE_suppression (chemin);
 	
-	printf("\nLe joueur à trouvé %d bon numéro\n", numWin);
+	printf("\nLe joueur à trouvé %d bon numéro\n\n", numWin);
 	*gain = numWin;
 	
 	return 0;
 }
 
-//Recup num win
 int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 {
+	printf("Serveur écriture: \n");
 	mkfifo (chemin, 0600);
 	
 	SE_FICHIER tube = SE_ouverture(chemin, O_WRONLY);
@@ -176,6 +191,12 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	if(gain == 0)
 	{
 		if(SE_ecritureEntier(tube, 0) == -1)
+		{
+			printf("Une erreur d'écriture a eu lieu\n");
+			return -1;
+		}
+		
+		if(SE_ecritureCaractere (tube, ' ') == -1)
 		{
 			printf("Une erreur d'écriture a eu lieu\n");
 			return -1;
@@ -201,8 +222,8 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	}
 	
 	SE_fermeture (tube);
-		
-	return 0;
+	
+	return gain;
 }
 
 int serveur(const char *chemin, int *tab, int tailleMax)
@@ -210,14 +231,18 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 	int gain;
 	
 	while(1)
-	{	
-		if(serveurLecture(chemin, tab, &gain) != -1)
-			break;
-		
-		sleep(1);
-	}
+	{
+		while(1)
+		{	
+			if(serveurLecture(chemin, tab, &gain) != -1)
+				break;
+			
+		}
 	
-	serveurEcriture(chemin, tab, tailleMax, gain);
+		if(serveurEcriture(chemin, tab, tailleMax, gain) == tab[0])
+			break;
+			
+	}
 	
 	return 0;
 }
@@ -230,13 +255,17 @@ int main(int argc, char* argv[]){
     
 	if(!strcmp(argv[1], "client"))
 	{
-		printf("client\n");
-		client("/tmp/tube", argc, argv);
+		sleep(0.2);
+		printf("Exécution de client\n");
+		int valRetour = client("/tmp/tube", argc, argv, tab[0]);
+		free(tab);
+		
+		return valRetour;
 	}
 	
 	else if(!strcmp(argv[1], "server"))
 	{
-		printf("serveur\n");
+		printf("Exécution de serveur\n");
 		serveur("/tmp/tube", tab, tailleMax);
 	}
 	
