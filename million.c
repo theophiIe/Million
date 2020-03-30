@@ -253,7 +253,7 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 	
 		if(serveurEcriture(chemin, tab, tailleMax, gain) == tab[0])
 			break;
-		sleep(0.8);
+		sleep(1);
 	}
 	
 	return 0;
