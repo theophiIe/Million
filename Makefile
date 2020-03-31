@@ -1,3 +1,6 @@
+run: compile
+	./scenario-test.sh
+
 compile:
 	gcc -Wall million.c -L. -liof -lm -g -o million
 	
