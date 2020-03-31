@@ -10,10 +10,13 @@
 #include <errno.h>
 #include <string.h>
 
-//include de la biblio
+//include de la bibliothéque du TD3
 #include "se_fichier.h"
 
-//Fichier configuration
+// Création d'un tableau d'entier à partir du fichier de configuration
+// \param[out]	tailleMax	taille du tableau
+// \param[in]	chemin		chemin d'accès au fichier de configuration	
+// \return					un tableau d'entier
 int *config(int *tailleMax, char *chemin)
 {
 	SE_FICHIER fic;
@@ -39,7 +42,13 @@ int *config(int *tailleMax, char *chemin)
 	return tab;
 }
 
-
+// ecriture des numéros joué par le client dans le tube
+// \param[in]	chemin		chemin d'acces du tube
+// \param[in]	argc		nombre d'argument 
+// \param[in]	argv		tableau d'argument qui contient les numéros à écrire
+// \return					-1 en cas d'erreur,
+//							0 si aucun problème,
+//							2 si le tube n'existe pas
 int clientEcriture(const char *chemin, int argc, char* argv[])
 {	
 	printf("Client écriture : \n");
@@ -74,6 +83,11 @@ int clientEcriture(const char *chemin, int argc, char* argv[])
 	return 0;
 }
 
+// Lecture du résultat envoyé depuis serveur par le tube 
+// \param[in]	chemin		chemin d'acces du tube
+// \return					-1 en cas d'erreur,
+//							 0 le client n'a pas trouvé tout les numéros,
+//							 1 le cient a trouvé tout les numéros
 int clientLecture(const char *chemin)
 {	
 	printf("Client lecture : \n");
@@ -105,8 +119,6 @@ int clientLecture(const char *chemin)
 	if(SE_lectureEntier(tube, &i) == -1)
 			return -1;
 	
-	
-	
 	SE_fermeture (tube);
 	SE_suppression (chemin);
 	
@@ -116,6 +128,14 @@ int clientLecture(const char *chemin)
 	return 0;
 }
 
+// Gestion des fonction de lecture et d'eciture du tube pour client
+// \param[in]	chemin		chemin d'acces du tube
+// \param[in]	argc		nombre d'argument 
+// \param[in]	argv		tableau d'argument qui contient les numéros à écrire
+// \return					-1 en cas d'erreur,
+//							 0 le client n'a pas trouvé tout les numéros,
+//							 1 le cient a trouvé tout les numéros
+//							 2 si le tube n'existe pas
 int client(const char *chemin, int argc, char* argv[])
 {
 	sleep(1);
@@ -140,6 +160,12 @@ int client(const char *chemin, int argc, char* argv[])
 	return 0;
 }
 
+// Le seveur créer le tube et lit son contenue 
+// \param[in]	chemin		chemin d'acces du tube
+// \param[in]	tab			tableau avec les informations du fichier .cfg
+// \param[out]	gain		nombre de numéro gagnant
+// \return					-1 en cas d'erreur,
+//							 0 tout c'est bien passé
 int serveurLecture(const char *chemin, int *tab, int *gain)
 {
 	printf("Serveur lecture: \n");
@@ -179,6 +205,12 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 	return 0;
 }
 
+// Le seveur créer le tube et lit son contenue 
+// \param[in]	chemin		chemin d'acces du tube
+// \param[in]	tab			tableau avec les informations du fichier .cfg
+// \param[out]	gain		nombre de numéro gagnant
+// \return					-1 en cas d'erreur,
+//							 0 tout c'est bien passé
 int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 {
 	printf("Serveur écriture: \n");
@@ -239,7 +271,11 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	return gain;
 }
 
-int serveur(const char *chemin, int *tab, int tailleMax)
+// Gestion des fonctions serveurs 
+// \param[in]	chemin		chemin d'acces du tube
+// \param[in]	tab			tableau avec les informations du fichier .cfg
+// \param[in]	tailleMax	nombre de numéro gagnant
+void serveur(const char *chemin, int *tab, int tailleMax)
 {
 	int gain;
 	
@@ -255,8 +291,6 @@ int serveur(const char *chemin, int *tab, int tailleMax)
 			break;
 		sleep(1);
 	}
-	
-	return 0;
 }
 
 int main(int argc, char* argv[])
