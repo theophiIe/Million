@@ -38,6 +38,11 @@ int *config(int *tailleMax, char *chemin)
 	return tab;
 }
 
+// Vérifie si les numéros fournie par le client sont des nombres positifs différent de zéro
+// \param[in]	argc		nombre d'argument 
+// \param[in]	argv		tableau avec les arguments
+// \return					3 en cas d'erreur,
+//							0 si aucun problème
 int testArgClient(int argc, char* argv[])
 {
 	for(int x = 2; x < argc; x++)
@@ -51,6 +56,29 @@ int testArgClient(int argc, char* argv[])
 	
 	return 0;
 }
+
+// Permet d'écrire dans le tube
+// \param[in]	tube		tube dans lequel écrire 
+// \param[in]	i			nombre à ecrire dans le tube
+// \return					-1 en cas d'erreur,
+//							0 si aucun problème
+int wrTube(SE_FICHIER tube, int i)
+{
+	if(SE_ecritureEntier(tube, i) == -1)
+	{
+		printf("Une erreur d'écriture a eu lieu\n");
+		return -1;
+	}
+	
+	if(SE_ecritureCaractere (tube, ' ') == -1)
+	{
+		printf("Une erreur d'écriture a eu lieu\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
 // ecriture des numéros joué par le client dans le tube
 // \param[in]	chemin		chemin d'acces du tube
 // \param[in]	argc		nombre d'argument 
@@ -72,17 +100,8 @@ int clientEcriture(const char *chemin, int argc, char* argv[])
 	{
 		printf("%d ", atoi(argv[x]));
 		
-		if(SE_ecritureEntier(tube, atoi(argv[x])) == -1)
-		{
-			printf("Une erreur d'écriture a eu lieu\n");
+		if(wrTube(tube, atoi(argv[x])) == -1)
 			return -1;
-		}
-		
-		if(SE_ecritureCaractere (tube, ' ') == -1)
-		{
-			printf("Une erreur d'écriture a eu lieu\n");
-			return -1;
-		}
 	}
 	
 	printf("\n");
@@ -215,23 +234,6 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 	return 0;
 }
 
-int wrTubeServ(SE_FICHIER tube, int i)
-{
-	if(SE_ecritureEntier(tube, i) == -1)
-	{
-		printf("Une erreur d'écriture a eu lieu\n");
-		return -1;
-	}
-	
-	if(SE_ecritureCaractere (tube, ' ') == -1)
-	{
-		printf("Une erreur d'écriture a eu lieu\n");
-		return -1;
-	}
-	
-	return 0;
-}
-
 // Le seveur créer le tube et lit son contenue 
 // \param[in]	chemin		chemin d'acces du tube
 // \param[in]	tab			tableau avec les informations du fichier .cfg
@@ -250,7 +252,7 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 		
 	if(gain == 0)
 	{
-		if(wrTubeServ(tube, 0) == -1)
+		if(wrTube(tube, 0) == -1)
 			return -1;
 	}
 	
@@ -258,12 +260,12 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	{
 		for(int x = 0; x < 2; x++)
 		{
-			if(wrTubeServ(tube, tab[tailleMax-(2*gain)+x]) == -1)
+			if(wrTube(tube, tab[tailleMax-(2*gain)+x]) == -1)
 				return -1;
 		}
 	}
 	
-	if(wrTubeServ(tube, tab[0]) == -1)
+	if(wrTube(tube, tab[0]) == -1)
 		return -1;
 	
 	SE_fermeture(tube);
