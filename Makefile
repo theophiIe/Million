@@ -14,6 +14,7 @@ zip:
 	mkdir ${LENOM}
 	cp Makefile ${LENOM}
 	cp *.h *.c *.sh *.cfg ${LENOM}
+	cp libiof.a ${LENOM}
 	cp README.md ${LENOM}
 	zip -r ${LENOM}.zip ${LENOM}
 	rm -rf ${LENOM}
