@@ -16,9 +16,9 @@ int *config(int *tailleMax, char *chemin)
 {
 	int i;
 	
-	SE_FICHIER fic = SE_ouverture (chemin, O_RDONLY);
+	SE_FICHIER file = SE_ouverture (chemin, O_RDONLY);
 
-	SE_lectureEntier(fic, &i);
+	SE_lectureEntier(file, &i);
 	
 	int taille = (i*3)+1; // i correspond au nombre de numéro le fois 3 correspond aux numeros gagnants + le nombre de numéros gagnant + les gains 
 	int *tab = malloc (sizeof (int) * taille);
@@ -27,11 +27,11 @@ int *config(int *tailleMax, char *chemin)
 	
 	for (int x = 1; x<taille; x++)
 	{
-		SE_lectureEntier(fic, &i);
+		SE_lectureEntier(file, &i);
 		tab[x] = i;
 	}
 	
-	SE_fermeture (fic);
+	SE_fermeture (file);
 	*tailleMax = taille;
 	
 	return tab;
@@ -40,8 +40,8 @@ int *config(int *tailleMax, char *chemin)
 // Vérifie si les numéros fournie par le client sont des nombres positifs différent de zéro
 // \param[in]	argc		nombre d'argument 
 // \param[in]	argv		tableau avec les arguments
-// \return					3 en cas d'erreur,
-//							0 si aucun problème
+// \return					-1 en cas d'erreur,
+//							 0 si aucun problème
 int testArgClient(int argc, char* argv[])
 {
 	for(int x = 2; x < argc; x++)
