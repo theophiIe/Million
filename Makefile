@@ -5,8 +5,10 @@ compile:
 	gcc -Wall million.c -L. -liof -lm -g -o million
 	
 clean:
-	rm million
-
+	rm -f million
+	rm -f ${LENOM}.zip
+	rm -f ${LENOM}.tar
+	
 LENOM=MOLINATTI_Theophile
 zip:
 	rm -rf ${LENOM}
@@ -19,10 +21,8 @@ zip:
 	zip -r ${LENOM}.zip ${LENOM}
 	rm -rf ${LENOM}
 
-cleanZip:
-	rm ${LENOM}.zip
-
 tar:
+	rm -f ${LENOM}.tar
 	mkdir ${LENOM}
 	cp Makefile ${LENOM}
 	cp *.h *.c *.sh *.cfg ${LENOM}
@@ -30,6 +30,3 @@ tar:
 	cp README.md ${LENOM}
 	tar -zcvf ${LENOM}.tar ${LENOM}
 	rm -rf ${LENOM}
-
-cleanTar:
-	rm ${LENOM}.tar
