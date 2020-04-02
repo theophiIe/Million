@@ -49,8 +49,8 @@ int testArgClient(int argc, char* argv[])
 	{
 		if(atoi(argv[x]) <= 0)
 		{
-			printf("Erreur d'argument Le client n'a pas était retenue pour \n\n");
-			return 3;
+			printf("Erreur d'argument : Le client n'a pas un ticket valide \n\n");
+			return -1;
 		}		
 	}
 	
@@ -119,6 +119,7 @@ int clientLecture(const char *chemin)
 {	
 	int i;
 	int bonNum;
+	
 	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 	
 	if (tube.descripteur == -1)
@@ -166,8 +167,8 @@ int client(const char *chemin, int argc, char* argv[])
 {
 	sleep(1);
 	
-	if(testArgClient(argc, argv) == 3)
-		return 3;
+	if(testArgClient(argc, argv) == -1)
+		return -1;
 	
 	switch(clientEcriture(chemin, argc, argv))
 	{
@@ -193,10 +194,10 @@ int client(const char *chemin, int argc, char* argv[])
 // Le seveur créer le tube et lit son contenue 
 // \param[in]	chemin		chemin d'acces du tube
 // \param[in]	tab			tableau avec les informations du fichier .cfg
-// \param[out]	gain		nombre de numéro gagnant
+// \param[out]	nbreNumWin	nombre de numéro gagnant
 // \return					-1 en cas d'erreur,
 //							 0 tout c'est bien passé
-int serveurLecture(const char *chemin, int *tab, int *gain)
+int serveurLecture(const char *chemin, int *tab, int *nbreNumWin)
 {
 	mkfifo ("/tmp/tube", 0600);
 	
@@ -229,7 +230,7 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 	SE_suppression (chemin);
 	
 	printf("\n\t\t  Le joueur à trouvé %d bon numéro\n", numWin);
-	*gain = numWin;
+	*nbreNumWin = numWin;
 	
 	return 0;
 }
@@ -237,10 +238,10 @@ int serveurLecture(const char *chemin, int *tab, int *gain)
 // Le seveur créer le tube et lit son contenue 
 // \param[in]	chemin		chemin d'acces du tube
 // \param[in]	tab			tableau avec les informations du fichier .cfg
-// \param[out]	gain		nombre de numéro gagnant
+// \param[out]	nbreNumWin	nombre de numéro gagnant
 // \return					-1 en cas d'erreur,
 //							 0 tout c'est bien passé
-int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
+int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int nbreNumWin)
 {
 	printf("Serveur écriture : Transmistions des données vers le client\n");
 	mkfifo (chemin, 0600);
@@ -250,7 +251,7 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	if (tube.descripteur == -1)
 		return -1;
 		
-	if(gain == 0)
+	if(nbreNumWin == 0)
 	{
 		if(wrTube(tube, 0) == -1)
 			return -1;
@@ -260,7 +261,7 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	{
 		for(int x = 0; x < 2; x++)
 		{
-			if(wrTube(tube, tab[tailleMax-(2*gain)+x]) == -1)
+			if(wrTube(tube, tab[tailleMax-(2*nbreNumWin)+x]) == -1)
 				return -1;
 		}
 	}
@@ -270,7 +271,7 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 	
 	SE_fermeture(tube);
 	
-	return gain;
+	return nbreNumWin;
 }
 
 // Gestion des fonctions serveurs 
@@ -279,17 +280,17 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int gain)
 // \param[in]	tailleMax	nombre de numéro gagnant
 void serveur(const char *chemin, int *tab, int tailleMax)
 {
-	int gain;
+	int nbreNumWin;
 	
 	while(1)
 	{
 		while(1)
 		{	
-			if(serveurLecture(chemin, tab, &gain) != -1)
+			if(serveurLecture(chemin, tab, &nbreNumWin) != -1)
 				break;
 		}
 	
-		if(serveurEcriture(chemin, tab, tailleMax, gain) == tab[0])
+		if(serveurEcriture(chemin, tab, tailleMax, nbreNumWin) == tab[0])
 			break;
 			
 		sleep(1);
@@ -302,7 +303,7 @@ int main(int argc, char* argv[])
 {	
 	if(!strcmp(argv[1], "client"))
 	{
-		printf("Exécution de client\n");
+		printf("Exécution du client n°%d\n", (int)getpid());
 		return client("/tmp/tube", argc, argv);
 	}
 	
@@ -313,7 +314,7 @@ int main(int argc, char* argv[])
     
 		tab = config(&tailleMax, argv[2]);
 		
-		printf("Exécution de serveur\n");
+		printf("Exécution du serveur n°%d\n\n", (int)getpid());
 		serveur("/tmp/tube", tab, tailleMax);
 		free(tab);
 	}
