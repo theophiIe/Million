@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
@@ -81,7 +80,7 @@ int wrTube(SE_FICHIER tube, int i)
 
 // ecriture des numéros joué par le client dans le tube
 // \param[in]	chemin		chemin d'acces du tube
-// \param[in]	argc		nombre d'argument 
+// \param[in]	argc		nombre d'argument
 // \param[in]	argv		tableau d'argument qui contient les numéros à écrire
 // \return					-1 en cas d'erreur,
 //							0 si aucun problème,
@@ -199,7 +198,7 @@ int client(const char *chemin, int argc, char* argv[])
 //							 0 tout c'est bien passé
 int serveurLecture(const char *chemin, int *tab, int *nbreNumWin)
 {
-	mkfifo ("/tmp/tube", 0600);
+	mkfifo (chemin, 0600);
 	
 	int i;
 	int numWin = 0;
@@ -301,10 +300,12 @@ void serveur(const char *chemin, int *tab, int tailleMax)
 
 int main(int argc, char* argv[])
 {	
+	const char *chemin = "/tmp/tube";
+	
 	if(!strcmp(argv[1], "client"))
 	{
 		printf("Exécution du client n°%d\n", (int)getpid());
-		return client("/tmp/tube", argc, argv);
+		return client(chemin, argc, argv);
 	}
 	
 	else if(!strcmp(argv[1], "server"))
@@ -315,7 +316,8 @@ int main(int argc, char* argv[])
 		tab = config(&tailleMax, argv[2]);
 		
 		printf("Exécution du serveur n°%d\n\n", (int)getpid());
-		serveur("/tmp/tube", tab, tailleMax);
+		serveur(chemin, tab, tailleMax);
+		printf("\nFin d'éxécution du serveur n°%d\n\n", (int)getpid());
 		free(tab);
 	}
 	
