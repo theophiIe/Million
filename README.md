@@ -27,3 +27,37 @@ Le fichier de configuration est détaillé ici :
 2 19                # gain pour 2 chiffres
 1 2                 # gain pour 1 chiffre
 ```
+
+# Compilation et excution
+La compilation du projet ce fait avec la lib libio.a :
+```
+gcc -Wall million.c -L. -liof -lm -g -o million
+```
+ou avec :
+```
+make compile
+```
+
+L'execution du programme avec le script scenario-test.sh
+```
+./scenario-test.sh
+```
+ou avec :
+```
+make run
+```
+
+# Auteur
+Projet fait par Théophile Molinatti TD4
+
+
+
+
+
+
+
+
+
+
+
+
