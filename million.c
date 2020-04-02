@@ -20,7 +20,10 @@ int *config(int *tailleMax, char *chemin)
 
 	SE_lectureEntier(file, &i);
 	
-	int taille = (i*3)+1; // i correspond au nombre de numéro le fois 3 correspond aux numeros gagnants + le nombre de numéros gagnant + les gains 
+	// i correspond au nombre de numéro pour la lotterie, 
+	//le fois 3 correspond : aux numeros gagnants + le nombre de numéros gagnant + les gains du fichier.cfg,
+	//le +1 est le premier chiffre du fichier.cfg
+	int taille = (i*3)+1; 
 	int *tab = malloc (sizeof (int) * taille);
 	
 	tab[0] = i;
