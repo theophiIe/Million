@@ -14,24 +14,24 @@
 // \return					un tableau d'entier
 int *config(int *tailleMax, char *chemin)
 {
-	int i;
+	int num;
 	
 	SE_FICHIER file = SE_ouverture (chemin, O_RDONLY);
 
-	SE_lectureEntier(file, &i);
+	SE_lectureEntier(file, &num);
 	
-	// i correspond au nombre de numéro pour la lotterie, 
+	//num correspond au nombre de numéro pour la lotterie, 
 	//le fois 3 correspond : aux numeros gagnants + le nombre de numéros gagnant + les gains du fichier.cfg,
 	//le +1 est le premier chiffre du fichier.cfg
-	int taille = (i*3)+1; 
+	int taille = (num*3)+1; 
 	int *tab = malloc (sizeof (int) * taille);
 	
-	tab[0] = i;
+	tab[0] = num;
 	
 	for (int x = 1; x<taille; x++)
 	{
-		SE_lectureEntier(file, &i);
-		tab[x] = i;
+		SE_lectureEntier(file, &num);
+		tab[x] = num;
 	}
 	
 	SE_fermeture (file);
@@ -125,7 +125,10 @@ int clientLecture(const char *chemin)
 	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 	
 	if (tube.descripteur == -1)
+	{
+		printf("Erreur lors de l'ouverture du tube\n");
 		return -1;
+	}
 	
 	if(SE_lectureEntier(tube, &i) == -1)
 		return -1;
@@ -210,7 +213,10 @@ int serveurLecture(const char *chemin, int *tab, int *nbreNumWin)
 	SE_FICHIER tube = SE_ouverture(chemin, O_RDONLY);
 
 	if (tube.descripteur == -1)
+	{
+		printf("Erreur lors de l'ouverture du tube\n");
 		return -1;
+	}
 	
 	printf("Serveur lecture : Le joueur a joué les numéros : ");
 	
@@ -232,6 +238,7 @@ int serveurLecture(const char *chemin, int *tab, int *nbreNumWin)
 	SE_suppression (chemin);
 	
 	printf("\n\t\t  Le joueur à trouvé %d bon numéro\n", numWin);
+	
 	*nbreNumWin = numWin;
 	
 	return 0;
@@ -251,7 +258,10 @@ int serveurEcriture(const char *chemin, int *tab, int tailleMax ,int nbreNumWin)
 	SE_FICHIER tube = SE_ouverture(chemin, O_WRONLY);
 
 	if (tube.descripteur == -1)
+	{
+		printf("Erreur lors de l'ouverture du tube\n");
 		return -1;
+	}
 		
 	if(nbreNumWin == 0)
 	{
