@@ -8,6 +8,7 @@ clean:
 	rm -f million
 	rm -f ${LENOM}.zip
 	rm -f ${LENOM}.tar
+	ls
 	
 LENOM=MOLINATTI_Theophile
 zip:
